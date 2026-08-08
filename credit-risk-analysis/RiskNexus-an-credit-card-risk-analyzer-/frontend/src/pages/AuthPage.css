@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #5D5FEF;
+  --primary-gradient: linear-gradient(90deg, #5D5FEF, #8472F1);
+  --text-color: #1a202c;
+  --subtle-text-color: #718096;
+  --bg-color: #f7fafc;
+  --card-bg-color: #ffffff;
+  --border-color: #e2e8f0;
+  --error-color: #e53e3e;
+}
+
+.auth-container-new {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #1f205f 0%, #cccae4 100%);
+}
+
+.auth-card-new {
+  width: 100%;
+  max-width: 450px;
+  background-color: var(--card-bg-color);
+  padding: 3rem;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.auth-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+  color: var(--subtle-text-color);
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.user-type-selector {
+  display: flex;
+  background-color: #EDF2F7;
+  border-radius: 12px;
+  padding: 6px;
+  margin-bottom: 1.5rem;
+}
+
+.user-type-selector button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background-color: transparent;
+  color: var(--subtle-text-color);
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-type-selector button.active {
+  background-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 14px 0 rgba(93, 95, 239, 0.3);
+}
+
+.action-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.action-tabs button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--subtle-text-color);
+  cursor: pointer;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.action-tabs button.active {
+  color: var(--text-color);
+}
+
+.action-tabs button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--primary-color);
+  border-radius: 2px;
+}
+
+.auth-form {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.auth-form label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-color);
+  margin-bottom: -0.75rem; 
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(93, 95, 239, 0.2);
+}
+
+.main-action-btn {
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary-gradient);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  justify-content: center;
+}
+
+.main-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px 0 rgba(93, 95, 239, 0.3);
+}
+
+.main-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.divider-new {
+  margin: 2rem 0;
+  color: var(--subtle-text-color);
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.divider-new::before, .divider-new::after {
+  content: '';
+  flex-grow: 1;
+  background-color: var(--border-color);
+  height: 1px;
+}
+
+.divider-new span {
+  padding: 0 1rem;
+}
+
+.google-btn-new {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background-color: white;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  transition: background-color 0.2s;
+}
+
+.google-btn-new:hover {
+  background-color: #F7FAFC;
+}
+
+.google-btn-new:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.google-btn-new img {
+  width: 20px;
+  height: 20px;
+}
+
+.error-message {
+  color: var(--error-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+
+.auth-form input[type="email"]{
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff;
+  color: var(--text-color);
+}

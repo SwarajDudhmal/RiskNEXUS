@@ -1,0 +1,104 @@
+.dark-modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(8px);
+}
+
+.dark-form-card {
+  background: #16171d;
+  border: 1px solid #2d2e36;
+  width: 90%;
+  max-width: 850px;
+  max-height: 90vh;
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.close-x {
+  position: absolute; top: 15px; right: 20px;
+  background: none; border: none; color: #64748b;
+  font-size: 1.8rem; cursor: pointer;
+}
+
+.form-header {
+  padding: 30px 40px 10px;
+  border-bottom: 1px solid #2d2e36;
+}
+
+.form-header h2 { margin: 0; color: #fff; font-size: 1.5rem; letter-spacing: -0.5px; }
+.subtitle { color: #64748b; font-size: 0.85rem; margin: 5px 0 20px; }
+
+/* Tier Selector Styling */
+.tier-nav label { font-size: 0.65rem; color: #3b82f6; font-weight: 800; display: block; margin-bottom: 5px; }
+.tier-dropdown {
+  background: #0f1014; border: 1px solid #3b82f6; color: #fff;
+  padding: 10px; border-radius: 6px; width: 100%; cursor: pointer;
+}
+
+.scroll-area {
+  padding: 30px 40px;
+  overflow-y: auto;
+}
+
+/* THE GRID SYSTEM - 2 COLUMNS */
+.fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 20px 30px; /* Vertical and Horizontal gap */
+}
+
+.input-group { display: flex; flex-direction: column; }
+.input-group label {
+  font-size: 0.7rem; font-weight: 700; color: #475569;
+  margin-bottom: 8px; letter-spacing: 0.03em;
+}
+
+.input-group input {
+  background: #0f1014; border: 1px solid #2d2e36;
+  padding: 12px; border-radius: 8px; color: #fff;
+  font-size: 0.95rem;
+}
+
+.input-group input:disabled { background: #1c1d25; color: #94a3b8; border-color: transparent; }
+
+.form-footer { padding: 20px 40px 30px; }
+.submit-btn-dark {
+  width: 100%; background: #3b82f6; color: #fff; border: none;
+  padding: 15px; border-radius: 8px; font-weight: 700; cursor: pointer;
+}
+
+
+.combo-container {
+  position: relative;
+  width: 100%;
+}
+
+.dark-input-combo {
+  background: #0f1014;
+  border: 1px solid #2d2e36;
+  padding: 12px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.95rem;
+  width: 100%;
+}
+
+.dark-input-combo:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Ensure datalist arrow is visible in some browsers */
+.dark-input-combo::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.5;
+  cursor: pointer;
+}

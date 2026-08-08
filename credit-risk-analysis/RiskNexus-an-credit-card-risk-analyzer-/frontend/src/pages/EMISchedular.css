@@ -1,0 +1,86 @@
+.emi-container {
+  padding: 2rem;
+  color: #e2e8f0;
+  background-color: #0f172a;
+  min-height: 100vh;
+}
+
+.emi-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #3b82f6;
+  text-align: center;
+}
+
+.emi-subtitle {
+  text-align: center;
+  color: #94a3b8;
+  margin-bottom: 2rem;
+}
+
+.emi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 2rem;
+}
+
+.emi-form {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 10px rgba(30, 58, 138, 0.3);
+}
+
+.emi-form label {
+  display: block;
+  margin-top: 1rem;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.emi-form input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-top: 0.4rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #0f172a;
+  color: #f1f5f9;
+  outline: none;
+}
+
+.emi-button {
+  margin-top: 1.5rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.emi-button:hover {
+  background: #2563eb;
+}
+
+.emi-result {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  text-align: center;
+}
+
+.emi-result h2 {
+  color: #f8fafc;
+  margin-bottom: 1rem;
+}
+
+.emi-result p {
+  margin: 0.5rem 0;
+  color: #e2e8f0;
+}
+
+.emi-chart {
+  margin-top: 2rem;
+}

@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ALM & FTP Dashboard v2</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg0:#030509;--bg1:#080d18;--bg2:#0d1526;--bg3:#121d34;
+  --card:#0f1a2e;--card2:#0a1220;
+  --blue:#2979ff;--teal:#00e5cc;--amber:#ffab00;
+  --red:#ff3d57;--green:#00e676;--purple:#7c4dff;
+  --border:rgba(41,121,255,0.16);--bsoft:rgba(255,255,255,0.055);
+  --tp:#e8edf7;--ts:#7a90b8;--tm:#3d5280;
+  --fd:'DM Sans',sans-serif;--fm:'IBM Plex Mono',monospace;--fh:'Syne',sans-serif;
+  --r:12px;--rs:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg0);color:var(--tp);font-family:var(--fd);font-size:14px;line-height:1.6;min-height:100vh;}
+.layout{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sb{width:224px;min-height:100vh;background:var(--bg1);border-right:1px solid var(--bsoft);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;}
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid var(--bsoft);}
+.sb-tag{font-family:var(--fm);font-size:10px;color:var(--teal);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
+.sb-logo h1{font-family:var(--fh);font-size:15px;font-weight:800;letter-spacing:-.02em;line-height:1.2;}
+.sb-logo .sv{font-size:10px;color:var(--tm);margin-top:2px;}
+.ns{padding:14px 10px 5px;font-family:var(--fm);font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:.1em;}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 14px;margin:1px 7px;border-radius:var(--rs);cursor:pointer;font-size:12.5px;color:var(--ts);border:1px solid transparent;transition:all .16s;}
+.ni:hover{background:rgba(41,121,255,.08);color:var(--tp);}
+.ni.active{background:rgba(41,121,255,.15);color:var(--blue);border-color:rgba(41,121,255,.28);font-weight:500;}
+.ni .ic{font-size:13px;width:16px;text-align:center;}
+.nb{margin-left:auto;font-family:var(--fm);font-size:10px;padding:1px 6px;border-radius:20px;}
+.nb.b{background:var(--blue);color:#fff;}
+.nb.w{background:var(--amber);color:#000;}
+.nb.r{background:var(--red);color:#fff;}
+.sb-foot{margin-top:auto;padding:14px;border-top:1px solid var(--bsoft);font-size:10px;color:var(--tm);}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* MAIN */
+.main{margin-left:224px;flex:1;display:flex;flex-direction:column;}
+.tb{height:56px;background:var(--bg1);border-bottom:1px solid var(--bsoft);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:50;}
+.tb-t{font-family:var(--fh);font-size:14px;font-weight:700;}
+.tb-bc{font-family:var(--fm);font-size:10px;color:var(--tm);}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.chip{font-family:var(--fm);font-size:11px;padding:4px 10px;border-radius:var(--rs);border:1px solid var(--bsoft);background:var(--bg2);color:var(--ts);}
+.chip.teal{color:var(--teal);background:rgba(0,229,204,.08);border-color:rgba(0,229,204,.2);}
+.chip.live{color:var(--green);background:rgba(0,230,118,.07);border-color:rgba(0,230,118,.2);}
+
+/* UPLOAD BANNER */
+.upload-banner{margin:18px 24px 0;background:rgba(41,121,255,.07);border:1px dashed rgba(41,121,255,.35);border-radius:var(--r);padding:14px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;}
+.upload-banner:hover{background:rgba(41,121,255,.12);border-color:rgba(41,121,255,.6);}
+.ub-icon{font-size:26px;}
+.ub-text strong{display:block;font-size:13px;font-weight:500;color:var(--tp);}
+.ub-text span{font-size:11px;color:var(--ts);}
+.ub-btn{margin-left:auto;font-family:var(--fm);font-size:11px;padding:6px 14px;border-radius:var(--rs);background:var(--blue);color:#fff;border:none;cursor:pointer;white-space:nowrap;}
+.ub-status{margin-left:auto;font-family:var(--fm);font-size:11px;color:var(--green);display:flex;align-items:center;gap:6px;}
+#file-input{display:none;}
+
+.content{padding:18px 24px;}
+
+/* SECTION */
+.sec{display:none;}.sec.active{display:block;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+.kpi{background:var(--card2);border:1px solid var(--bsoft);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.bl::before{background:var(--blue)}.kpi.te::before{background:var(--teal)}
+.kpi.am::before{background:var(--amber)}.kpi.re::before{background:var(--red)}
+.kpi.gr::before{background:var(--green)}
+.kpi-lbl{font-size:10px;color:var(--tm);font-family:var(--fm);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.kpi-val{font-family:var(--fm);font-size:20px;font-weight:500;line-height:1;}
+.kpi-sub{font-size:10px;color:var(--ts);margin-top:5px;}
+.badge{display:inline-flex;align-items:center;gap:2px;font-family:var(--fm);font-size:10px;padding:2px 5px;border-radius:4px;}
+.badge.up{background:rgba(0,230,118,.1);color:var(--green);}
+.badge.dn{background:rgba(255,61,87,.1);color:var(--red);}
+.badge.wa{background:rgba(255,171,0,.1);color:var(--amber);}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--bsoft);border-radius:var(--r);padding:18px 20px;}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.ct{font-family:var(--fh);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.cs{font-size:10px;color:var(--tm);margin-top:2px;}
+.tag{font-family:var(--fm);font-size:9px;padding:3px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.07em;}
+.tag.bl{background:rgba(41,121,255,.12);color:var(--blue);border:1px solid rgba(41,121,255,.25);}
+.tag.te{background:rgba(0,229,204,.1);color:var(--teal);border:1px solid rgba(0,229,204,.2);}
+.tag.am{background:rgba(255,171,0,.1);color:var(--amber);border:1px solid rgba(255,171,0,.2);}
+.tag.re{background:rgba(255,61,87,.1);color:var(--red);border:1px solid rgba(255,61,87,.2);}
+.tag.gr{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2);}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:14px;}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:14px;}
+.mb4{margin-bottom:14px;}.mb6{margin-bottom:22px;}
+
+/* TABLE */
+.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt th{text-align:left;padding:7px 10px;font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);border-bottom:1px solid var(--bsoft);}
+.dt td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--ts);font-family:var(--fm);font-size:11.5px;}
+.dt tr:hover td{background:rgba(41,121,255,.04);color:var(--tp);}
+.dt td.pos{color:var(--green)}.dt td.neg{color:var(--red)}.dt td.wa{color:var(--amber)}
+.dt td.nm{text-align:right}.dt td.hl{color:var(--tp);font-weight:500}
+
+/* FORM */
+.fg{display:grid;gap:10px;}
+.fl{font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:4px;}
+.fi{background:var(--bg0);border:1px solid var(--border);border-radius:var(--rs);padding:8px 11px;color:var(--tp);font-family:var(--fm);font-size:12px;transition:border-color .16s;outline:none;width:100%;}
+.fi:focus{border-color:var(--blue);}
+select.fi{cursor:pointer;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rs);border:none;font-family:var(--fd);font-size:12.5px;font-weight:500;cursor:pointer;transition:all .16s;}
+.btn-p{background:var(--blue);color:#fff;}.btn-p:hover{background:#1565c0;}
+.btn-s{background:var(--bg2);color:var(--ts);border:1px solid var(--bsoft);}.btn-s:hover{color:var(--tp);}
+.btn-t{background:rgba(0,229,204,.1);color:var(--teal);border:1px solid rgba(0,229,204,.25);}.btn-t:hover{background:rgba(0,229,204,.18);}
+
+/* RESULT BOX */
+.rb{background:var(--bg0);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-top:14px;}
+.rr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.rr:last-child{border-bottom:none;}
+.rk{font-size:11.5px;color:var(--ts);}
+.rv{font-family:var(--fm);font-size:12.5px;font-weight:500;}
+.rv.hi{color:var(--teal);font-size:15px;}.rv.wa{color:var(--amber);}.rv.da{color:var(--red);}
+
+/* GAUGE */
+.gauge{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin:6px 0;}
+.gf{height:100%;border-radius:3px;transition:width .7s ease;}
+.gf.bl{background:var(--blue)}.gf.te{background:var(--teal)}.gf.am{background:var(--amber)}
+.gf.re{background:var(--red)}.gf.gr{background:var(--green)}
+
+/* ALERT */
+.al{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--rs);font-size:12.5px;margin-bottom:10px;border-left:3px solid;}
+.al.in{background:rgba(41,121,255,.07);border-color:var(--blue);color:#7ab0ff;}
+.al.wa{background:rgba(255,171,0,.07);border-color:var(--amber);color:#ffcc66;}
+.al.da{background:rgba(255,61,87,.07);border-color:var(--red);color:#ff8094;}
+.al.ok{background:rgba(0,230,118,.07);border-color:var(--green);color:#66ffaa;}
+
+/* DIVIDER */
+.dv{height:1px;background:var(--bsoft);margin:14px 0;}
+
+/* WF */
+.wf-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.wf-lbl{min-width:170px;font-size:11px;color:var(--ts);}
+.wf-bw{flex:1;height:16px;background:rgba(255,255,255,.03);border-radius:3px;overflow:hidden;}
+.wf-bar{height:100%;border-radius:3px;}
+.wf-v{min-width:60px;font-family:var(--fm);font-size:11px;text-align:right;}
+
+canvas{display:block;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg0);}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+#live-clock{font-family:var(--fm);font-size:11px;color:var(--ts);background:var(--bg2);border:1px solid var(--bsoft);padding:3px 10px;border-radius:var(--rs);}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-tag">Credit Risk Suite</div>
+    <h1>BankVault<br>Analytics</h1>
+    <div class="sv">v3.0 — Live Data</div>
+  </div>
+  <div class="ns">Overview</div>
+  <div class="ni active" onclick="navTo(this,'dashboard')"><span class="ic">⬡</span>Dashboard</div>
+  <div class="ns">ALM Module</div>
+  <div class="ni" onclick="navTo(this,'gap')"><span class="ic">◈</span>Gap Analysis</div>
+  <div class="ni" onclick="navTo(this,'liq')"><span class="ic">◉</span>Liquidity Risk<span class="nb w" id="nb-liq">—</span></div>
+  <div class="ni" onclick="navTo(this,'irr')"><span class="ic">◎</span>Interest Rate Risk</div>
+  <div class="ni" onclick="navTo(this,'stress')"><span class="ic">▲</span>Stress Testing</div>
+  <div class="ns">FTP Module</div>
+  <div class="ni" onclick="navTo(this,'ftp')"><span class="ic">◆</span>FTP Calculator</div>
+  <div class="ni" onclick="navTo(this,'pool')"><span class="ic">◇</span>Pool Rate Engine</div>
+  <div class="ni" onclick="navTo(this,'profit')"><span class="ic">◐</span>Unit Profitability</div>
+  <div class="ns">Credit Risk</div>
+  <div class="ni" onclick="navTo(this,'credit')"><span class="ic">⬟</span>Risk Analyzer<span class="nb r" id="nb-cr">—</span></div>
+  <div class="sb-foot">
+    <div><span class="dot"></span><span id="data-src">No data loaded</span></div>
+    <div style="margin-top:3px;font-size:9px;" id="sync-time">Upload Excel to begin</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="tb">
+    <div>
+      <div class="tb-t" id="page-title">ALM & FTP Dashboard</div>
+      <div class="tb-bc" id="page-bc">Overview → Dashboard</div>
+    </div>
+    <div class="tb-r">
+      <div id="live-clock">--:--:--</div>
+      <div class="chip teal" id="qchip">No Data</div>
+      <div class="chip live" id="bank-chip">Upload Data</div>
+    </div>
+  </div>
+
+  <!-- UPLOAD BANNER -->
+  <div class="upload-banner" onclick="document.getElementById('file-input').click()">
+    <div class="ub-icon">📊</div>
+    <div class="ub-text">
+      <strong>Upload ALM & FTP Data Template</strong>
+      <span>Excel (.xlsx) — use the provided template format</span>
+    </div>
+    <div id="upload-status" class="ub-status" style="display:none;">
+      <span>●</span><span id="upload-msg">Loaded</span>
+    </div>
+    <button class="ub-btn" onclick="event.stopPropagation();document.getElementById('file-input').click()">📂 Choose File</button>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleUpload(event)"/>
+
+  <div class="content">
+
+  <!-- ── DASHBOARD ── -->
+  <div id="sec-dashboard" class="sec active">
+    <div id="dash-alerts"></div>
+    <div class="kpi-grid" id="kpi-row"></div>
+
+    <div class="g2 mb6">
+      <div class="card">
+        <div class="ch"><div><div class="ct">NII Sensitivity — Rate Shocks</div><div class="cs">Impact on Net Interest Income (₹ Crore)</div></div><span class="tag bl">ALM</span></div>
+        <div style="position:relative;height:200px;"><canvas id="niiChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">FTP Contribution by Unit</div><div class="cs">Transfer pricing spread allocation</div></div><span class="tag te">FTP</span></div>
+        <div style="position:relative;height:200px;"><canvas id="ftpDonut"></canvas></div>
+      </div>
+    </div>
+
+    <div class="g21 mb6">
+      <div class="card">
+        <div class="ch"><div><div class="ct">Maturity Profile — Assets vs Liabilities</div><div class="cs">By time bucket (₹ Crore)</div></div><span class="tag bl">ALM</span></div>
+        <div style="position:relative;height:190px;"><canvas id="matChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">Regulatory Ratios</div></div><span class="tag am">Compliance</span></div>
+        <div id="reg-gauges"></div>
+      </div>
+    </div>
+
+    <div class="card mb6">
+      <div class="ch"><div><div class="ct">Portfolio Summary — Maturity Buckets</div></div></div>
+      <table class="dt" id="summary-table">
+        <thead><tr><th>Bucket</th><th>Assets (₹Cr)</th><th>Liabilities (₹Cr)</th><th>Gap</th><th>Cumul. Gap</th><th>FTP Rate</th><th>NII @100bps</th><th>Status</th></tr></thead>
+        <tbody id="summary-tbody"><tr><td colspan="8" style="text-align:center;color:var(--tm);padding:24px;">Upload data to populate table</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── GAP ANALYSIS ── -->
+  <div id="sec-gap" class="sec">
+    <div class="g2 mb6">
+      <div class="card">
+        <div class="ch"><div><div class="ct">Gap Analysis Calculator</div><div class="cs">Re-pricing gap and duration gap</div></div><span class="tag bl">ALM</span></div>
+        <div class="fg" style="grid-template-columns:1fr 1fr;">
+          <div><div class="fl">Rate-Sensitive Assets (₹Cr)</div><input class="fi" type="number" id="g-rsa" placeholder="from uploaded data"/></div>
+          <div><div class="fl">Rate-Sensitive Liab. (₹Cr)</div><input class="fi" type="number" id="g-rsl"/></div>
+          <div><div class="fl">Total Assets (₹Cr)</div><input class="fi" type="number" id="g-ta"/></div>
+          <div><div class="fl">Rate Shock (bps)</div><input class="fi" type="number" id="g-bps" value="100"/></div>
+          <div><div class="fl">Asset Duration (yrs)</div><input class="fi" type="number" id="g-da" step=".1"/></div>
+          <div><div class="fl">Liability Duration (yrs)</div><input class="fi" type="number" id="g-dl" step=".1"/></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-p" onclick="calcGap()">⟳ Calculate</button>
+          <button class="btn btn-s" onclick="autoFillGap()">↓ Auto-fill from Data</button>
+        </div>
+        <div id="gap-res" class="rb" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">Gap Chart</div></div></div>
+        <div style="position:relative;height:260px;"><canvas id="gapChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Re-pricing Gap Table</div><div class="cs">From uploaded data</div></div></div>
+      <table class="dt"><thead><tr><th>Bucket</th><th>Assets</th><th>Liabilities</th><th>Gap</th><th>Cumul. Gap</th><th>Gap %</th><th>NII @100bps</th><th>Risk</th></tr></thead>
+      <tbody id="gap-tbody"><tr><td colspan="8" style="text-align:center;color:var(--tm);padding:20px;">Upload data to populate</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- ── LIQUIDITY ── -->
+  <div id="sec-liq" class="sec">
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);" id="liq-kpis"></div>
+    <div class="g2 mb6">
+      <div class="card">
+        <div class="ch"><div><div class="ct">LCR Calculator</div><div class="cs">Basel III — 30-day stress</div></div><span class="tag te">Basel III</span></div>
+        <div class="fg" style="grid-template-columns:1fr 1fr;">
+          <div><div class="fl">Level 1 HQLA (₹Cr)</div><input class="fi" type="number" id="l1" value="5200"/></div>
+          <div><div class="fl">Level 2A HQLA (₹Cr)</div><input class="fi" type="number" id="l2a" value="1400"/></div>
+          <div><div class="fl">Level 2B HQLA (₹Cr)</div><input class="fi" type="number" id="l2b" value="380"/></div>
+          <div><div class="fl">Net Cash Outflows (₹Cr)</div><input class="fi" type="number" id="nco" value="4640"/></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-p" onclick="calcLCR()">⟳ Calculate LCR</button>
+          <button class="btn btn-s" onclick="autoFillLCR()">↓ Auto-fill</button>
+        </div>
+        <div id="lcr-res" class="rb" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">NSFR Calculator</div><div class="cs">Basel III — stable funding</div></div><span class="tag am">Basel III</span></div>
+        <div class="fg" style="grid-template-columns:1fr 1fr;">
+          <div><div class="fl">Available Stable Funding (₹Cr)</div><input class="fi" type="number" id="asf" value="38200"/></div>
+          <div><div class="fl">Required Stable Funding (₹Cr)</div><input class="fi" type="number" id="rsf" value="34100"/></div>
+          <div><div class="fl">Tier 1 Capital (₹Cr)</div><input class="fi" type="number" id="t1" value="4800"/></div>
+          <div><div class="fl">Retail Deposits (₹Cr)</div><input class="fi" type="number" id="rdep" value="22000"/></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-p" onclick="calcNSFR()">⟳ Calculate NSFR</button>
+          <button class="btn btn-s" onclick="autoFillNSFR()">↓ Auto-fill</button>
+        </div>
+        <div id="nsfr-res" class="rb" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Liquidity Stress Scenarios</div></div></div>
+      <table class="dt"><thead><tr><th>Scenario</th><th>Deposit Runoff</th><th>Wholesale Funding Loss</th><th>HQLA Haircut</th><th>Survival Days</th><th>Liquidity Gap</th><th>Status</th></tr></thead>
+      <tbody id="stress-liq-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ── IRR ── -->
+  <div id="sec-irr" class="sec">
+    <div class="g2 mb6">
+      <div class="card">
+        <div class="ch"><div><div class="ct">NII Sensitivity Calculator</div></div><span class="tag bl">IRR</span></div>
+        <div class="fg" style="grid-template-columns:1fr 1fr;">
+          <div><div class="fl">RSA (₹Cr)</div><input class="fi" type="number" id="irr-rsa"/></div>
+          <div><div class="fl">RSL (₹Cr)</div><input class="fi" type="number" id="irr-rsl"/></div>
+          <div><div class="fl">Avg Asset Yield (%)</div><input class="fi" type="number" id="irr-ay" step=".1" value="8.2"/></div>
+          <div><div class="fl">Avg Liability Cost (%)</div><input class="fi" type="number" id="irr-lc" step=".1" value="5.8"/></div>
+          <div><div class="fl">Rate Shock (bps)</div><input class="fi" type="number" id="irr-bps" value="100"/></div>
+          <div><div class="fl">Horizon (months)</div><input class="fi" type="number" id="irr-h" value="12"/></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-p" onclick="calcNII()">⟳ Calculate</button>
+          <button class="btn btn-s" onclick="autoFillIRR()">↓ Auto-fill</button>
+        </div>
+        <div id="nii-res" class="rb" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">Duration Gap / EVE</div></div><span class="tag bl">EVE</span></div>
+        <div class="fg" style="grid-template-columns:1fr 1fr;">
+          <div><div class="fl">Asset Duration (yrs)</div><input class="fi" type="number" id="eve-da" step=".1"/></div>
+          <div><div class="fl">Liability Duration (yrs)</div><input class="fi" type="number" id="eve-dl" step=".1"/></div>
+          <div><div class="fl">Total Assets (₹Cr)</div><input class="fi" type="number" id="eve-ta"/></div>
+          <div><div class="fl">Leverage (A/E)</div><input class="fi" type="number" id="eve-lev" step=".1" value="8.5"/></div>
+          <div><div class="fl">Rate Change (bps)</div><input class="fi" type="number" id="eve-bps" value="200"/></div>
+          <div><div class="fl">Discount Rate (%)</div><input class="fi" type="number" id="eve-dr" step=".1" value="7.5"/></div>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn btn-p" onclick="calcEVE()">⟳ Calculate EVE</button>
+        </div>
+        <div id="eve-res" class="rb" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Rate Shock Grid — NII vs EVE</div></div></div>
+      <div style="position:relative;height:220px;"><canvas id="rateChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── STRESS ── -->
+  <div id="sec-stress" class="sec">
+    <div class="card mb6">
+      <div class="ch"><div><div class="ct">Stress Test Engine</div><div class="cs">Multi-scenario simulation</div></div><span class="tag re">Stress</span></div>
+      <div class="fg" style="grid-template-columns:1fr 1fr 1fr;">
+        <div><div class="fl">Scenario</div>
+          <select class="fi" id="stress-type">
+            <option>Rate Shock (+200bps)</option><option>Rate Shock (−200bps)</option>
+            <option>Credit Crunch</option><option>Liquidity Crisis</option><option>Combined Shock</option>
+          </select></div>
+        <div><div class="fl">Portfolio Size (₹Cr)</div><input class="fi" type="number" id="stress-sz" placeholder="auto from data"/></div>
+        <div><div class="fl">Capital Buffer (₹Cr)</div><input class="fi" type="number" id="stress-cap" placeholder="auto from data"/></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-p" onclick="runStress()">▶ Run Stress Test</button>
+        <button class="btn btn-s" onclick="autoFillStress()">↓ Auto-fill</button>
+      </div>
+      <div id="stress-res" class="rb" style="display:none;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Pre-loaded Scenario Grid</div></div></div>
+      <table class="dt" id="stress-table">
+        <thead><tr><th>Scenario</th><th>NII Impact</th><th>EVE Impact</th><th>Cap Impact</th><th>LCR Post</th><th>NSFR Post</th><th>Verdict</th></tr></thead>
+        <tbody id="stress-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── FTP CALC ── -->
+  <div id="sec-ftp" class="sec">
+    <div class="g2 mb6">
+      <div class="card">
+        <div class="ch"><div><div class="ct">FTP Calculator</div><div class="cs">All-In Transfer Price</div></div><span class="tag te">FTP</span></div>
+        <div class="fg" style="grid-template-columns:1fr 1fr;">
+          <div><div class="fl">Instrument Type</div><select class="fi" id="ftp-type"><option value="loan">Loan (Asset)</option><option value="deposit">Deposit (Liability)</option><option value="bond">Bond Investment</option></select></div>
+          <div><div class="fl">Amount (₹Cr)</div><input class="fi" type="number" id="ftp-amt" value="500"/></div>
+          <div><div class="fl">Maturity (months)</div><input class="fi" type="number" id="ftp-mat" value="36"/></div>
+          <div><div class="fl">Contract Rate (%)</div><input class="fi" type="number" id="ftp-cr" step=".1" value="9.5"/></div>
+          <div><div class="fl">FTP Pool Rate (%)</div><input class="fi" type="number" id="ftp-pr" step=".1" value="7.4"/></div>
+          <div><div class="fl">Liquidity Premium (bps)</div><input class="fi" type="number" id="ftp-lp" value="25"/></div>
+          <div><div class="fl">Credit Spread (bps)</div><input class="fi" type="number" id="ftp-cs" value="45"/></div>
+          <div><div class="fl">Option Cost (bps)</div><input class="fi" type="number" id="ftp-oc" value="10"/></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-p" onclick="calcFTP()">⟳ Calculate FTP</button>
+          <button class="btn btn-s" onclick="document.getElementById('ftp-res').style.display='none';document.getElementById('ftp-wf').innerHTML='<div style=\'color:var(--tm);font-size:11px;\'>Run calculation to see waterfall.</div>'">↺ Reset</button>
+        </div>
+        <div id="ftp-res" class="rb" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">FTP Waterfall</div><div class="cs">Rate component breakdown</div></div></div>
+        <div id="ftp-wf"><div style="color:var(--tm);font-size:11px;">Run calculation to see waterfall.</div></div>
+        <div class="dv"></div>
+        <div class="ch" style="margin-bottom:10px;"><div><div class="ct" style="font-size:11px;">FTP Pool Rate Curve</div></div></div>
+        <div style="position:relative;height:130px;"><canvas id="ftpCurve"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">FTP Transaction Log</div><div class="cs">From uploaded data</div></div></div>
+      <table class="dt"><thead><tr><th>Txn ID</th><th>Product</th><th>Business Unit</th><th>Amount (₹Cr)</th><th>Maturity</th><th>Contract Rate</th><th>FTP Pool Rate</th><th>Liq. Premium</th><th>Net Spread</th></tr></thead>
+      <tbody id="ftp-txn-tbody"><tr><td colspan="9" style="text-align:center;color:var(--tm);padding:20px;">Upload data to populate transaction log</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- ── POOL ── -->
+  <div id="sec-pool" class="sec">
+    <div class="g12 mb6">
+      <div class="card">
+        <div class="ch"><div><div class="ct">Pool Rate Schedule</div><div class="cs">Editable — click Update</div></div></div>
+        <table class="dt" style="font-size:11px;">
+          <thead><tr><th>Tenor</th><th>Base %</th><th>Liq Prem (bps)</th><th>Total FTP %</th><th></th></tr></thead>
+          <tbody id="pool-tbody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">Yield Curve Comparison</div><div class="cs">FTP vs MCLR vs G-Sec</div></div></div>
+        <div style="position:relative;height:300px;"><canvas id="poolChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROFITABILITY ── -->
+  <div id="sec-profit" class="sec">
+    <div class="kpi-grid" id="profit-kpis"></div>
+    <div class="card mb6">
+      <div class="ch"><div><div class="ct">Business Unit P&L — FTP Adjusted</div></div></div>
+      <table class="dt"><thead><tr><th>Business Unit</th><th>Loans (₹Cr)</th><th>Deposits (₹Cr)</th><th>Loan Yield</th><th>Dep. Cost</th><th>FTP Charge</th><th>FTP Credit</th><th>Lending Spread</th><th>Dep. Spread</th><th>Net FTP NIM</th><th>RAROC</th></tr></thead>
+      <tbody id="profit-tbody"><tr><td colspan="11" style="text-align:center;color:var(--tm);padding:20px;">Upload data to populate</td></tr></tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">RAROC by Business Unit</div></div></div>
+      <div style="position:relative;height:220px;"><canvas id="rarocChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── CREDIT ── -->
+  <div id="sec-credit" class="sec">
+    <div id="cr-alerts"></div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);" id="cr-kpis"></div>
+    <div class="g2 mb6" style="margin-top:14px;">
+      <div class="card">
+        <div class="ch"><div><div class="ct">Expected Loss Calculator</div></div><span class="tag re">Credit Risk</span></div>
+        <div class="fg" style="grid-template-columns:1fr 1fr;">
+          <div><div class="fl">EAD (₹Cr)</div><input class="fi" type="number" id="cr-ead" value="250"/></div>
+          <div><div class="fl">PD (%)</div><input class="fi" type="number" id="cr-pd" step=".1" value="2.5"/></div>
+          <div><div class="fl">LGD (%)</div><input class="fi" type="number" id="cr-lgd" value="45"/></div>
+          <div><div class="fl">Credit Rating</div><select class="fi" id="cr-rat"><option>AAA</option><option>AA</option><option>A</option><option selected>BBB</option><option>BB</option><option>B</option><option>CCC</option></select></div>
+        </div>
+        <div style="margin-top:12px;"><button class="btn btn-p" onclick="calcEL()">⟳ Calculate EL</button></div>
+        <div id="el-res" class="rb" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><div class="ct">Portfolio Credit Quality</div></div></div>
+        <div style="position:relative;height:220px;"><canvas id="crQChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="ct">Portfolio — Borrower Level EL</div><div class="cs">From uploaded data</div></div></div>
+      <table class="dt"><thead><tr><th>Account</th><th>Borrower</th><th>Sector</th><th>EAD (₹Cr)</th><th>PD</th><th>LGD</th><th>EL (₹Cr)</th><th>UL (₹Cr)</th><th>Rating</th><th>Watchlist</th><th>Provision</th></tr></thead>
+      <tbody id="cr-tbody"><tr><td colspan="11" style="text-align:center;color:var(--tm);padding:20px;">Upload data to populate</td></tr></tbody></table>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════════════════
+const S = {
+  loaded: false,
+  meta: {},
+  buckets: [],
+  irr: {},
+  lcr: {},
+  nsfr: {},
+  ftpRates: [],
+  ftpTxns: [],
+  credit: [],
+  units: []
+};
+
+const CHARTS = {};
+const C = {
+  blue:'#2979ff', teal:'#00e5cc', amber:'#ffab00',
+  red:'#ff3d57', green:'#00e676', purple:'#7c4dff',
+  t:'#7a90b8', grid:'rgba(255,255,255,0.05)'
+};
+
+// ── CLOCK ──
+function updateClock(){
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── NAV ──
+const TITLES = {
+  dashboard:'ALM & FTP Dashboard', gap:'Gap Analysis',
+  liq:'Liquidity Risk', irr:'Interest Rate Risk',
+  stress:'Stress Testing', ftp:'FTP Calculator',
+  pool:'Pool Rate Engine', profit:'Unit Profitability', credit:'Credit Risk Analyzer'
+};
+function navTo(el, id){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sec-'+id).classList.add('active');
+  document.getElementById('page-title').textContent = TITLES[id]||id;
+  document.getElementById('page-bc').textContent = 'Overview → '+(TITLES[id]||id);
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXCEL UPLOAD
+// ═══════════════════════════════════════════════════════════
+function handleUpload(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const wb = XLSX.read(ev.target.result, {type:'binary', cellDates:true});
+      parseWorkbook(wb, file.name);
+    } catch(err){
+      showAlert('da','Could not parse file: '+err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function parseWorkbook(wb, fname){
+  // ── BANK_METADATA ──
+  if(wb.SheetNames.includes('BANK_METADATA')){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['BANK_METADATA'], {header:1});
+    rows.forEach(r => {
+      if(!r[0]) return;
+      const key = String(r[0]).trim();
+      const val = r[1];
+      const map = {
+        'Bank Name':'bankName','Report Date':'reportDate','Quarter':'quarter',
+        'Currency':'currency','Unit':'unit','Total Assets':'totalAssets',
+        'Total Liabilities':'totalLiabilities','Net Worth / Equity':'equity',
+        'MCLR (1Y)':'mclr','Repo Rate':'repoRate','CRR':'crr','SLR':'slr'
+      };
+      if(map[key]) S.meta[map[key]] = val;
+    });
+  }
+
+  // ── MATURITY_BUCKETS ──
+  if(wb.SheetNames.includes('MATURITY_BUCKETS')){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['MATURITY_BUCKETS'], {header:1});
+    S.buckets = [];
+    let cumGap = 0;
+    rows.forEach((r,i) => {
+      if(i < 3) return; // skip headers
+      if(!r[0] || String(r[0]).startsWith('TOTAL')) return;
+      const assets = +r[2]||0, liab = +r[3]||0, ftp = +r[7]||0;
+      const gap = assets - liab;
+      cumGap += gap;
+      const ta = +S.meta.totalAssets || 47980;
+      S.buckets.push({
+        label: String(r[0]), code: r[1],
+        assets, liab, gap, cumGap,
+        gapPct: ta ? gap/ta*100 : 0,
+        ftp, nii: gap*0.01,
+        hqla: String(r[10]||'')
+      });
+    });
+  }
+
+  // ── INTEREST_RATE_RISK ──
+  if(wb.SheetNames.includes('INTEREST_RATE_RISK')){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['INTEREST_RATE_RISK'], {header:1});
+    const imap = {
+      'Rate Sensitive Assets (RSA)':'rsa','Rate Sensitive Liabilities (RSL)':'rsl',
+      'Total Assets':'ta','Average Asset Yield':'ay','Average Liability Cost':'lc',
+      'Asset Duration':'da','Liability Duration':'dl','Planning Horizon':'horizon'
+    };
+    S.irr = {};
+    rows.forEach(r => {
+      if(!r[0]) return;
+      const k = String(r[0]).trim();
+      if(imap[k]) S.irr[imap[k]] = +r[2]||0;
+    });
+  }
+
+  // ── LIQUIDITY_RATIOS ──
+  if(wb.SheetNames.includes('LIQUIDITY_RATIOS')){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['LIQUIDITY_RATIOS'], {header:1});
+    let l1=0,l2a=0,l2b=0,nco=0,asf=0,rsf=0;
+    rows.forEach(r => {
+      if(!r[1]) return;
+      const cat = String(r[1]).trim();
+      const amt = +r[2]||0; const haircut = +r[3]||0;
+      if(cat==='Level 1 HQLA') l1 += amt*(1-haircut);
+      else if(cat==='Level 2A HQLA') l2a += amt*(1-haircut);
+      else if(cat==='Level 2B HQLA') l2b += amt*(1-haircut);
+      else if(cat==='Net Cash Outflow') nco += amt*(1-haircut);
+      else if(cat==='ASF') asf += amt*(+r[3]||0);
+      else if(cat==='RSF') rsf += amt*(+r[3]||0);
+    });
+    S.lcr = {l1,l2a,l2b,hqla:l1+l2a+l2b,nco,ratio:nco?(l1+l2a+l2b)/nco*100:0};
+    S.nsfr = {asf,rsf,ratio:rsf?asf/rsf*100:0};
+  }
+
+  // ── FTP_RATES ──
+  if(wb.SheetNames.includes('FTP_RATES')){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['FTP_RATES'], {header:1});
+    S.ftpRates = [];
+    S.ftpTxns = [];
+    let inTxn = false;
+    rows.forEach((r,i) => {
+      if(i < 4) return;
+      if(String(r[0]||'').includes('SECTION B')) { inTxn = true; return; }
+      if(!inTxn && r[0] && r[2]){
+        S.ftpRates.push({
+          tenor:String(r[0]),code:String(r[1]||''),
+          base:+r[2]||0, lp:+r[3]||0, cs:+r[4]||0, oc:+r[5]||0,
+          total:+r[6]||((+r[2])+(+r[3]+r[4]+r[5])/100),
+          mclr:+r[7]||0, gsec:+r[8]||0
+        });
+      }
+      if(inTxn && r[0] && String(r[0]).startsWith('TXN')){
+        S.ftpTxns.push({
+          id:r[0],product:r[1],unit:r[2],
+          amt:+r[3],mat:+r[4],cr:+r[5],pr:+r[6],lp:+r[7],cs:+r[8],
+          spread:+r[9]||(+r[5]-(+r[6]+(+r[7]+r[8])/100))
+        });
+      }
+    });
+  }
+
+  // ── CREDIT_RISK ──
+  if(wb.SheetNames.includes('CREDIT_RISK')){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['CREDIT_RISK'], {header:1});
+    S.credit = [];
+    rows.forEach((r,i) => {
+      if(i < 4) return;
+      if(!r[0] || !String(r[0]).startsWith('ACC')) return;
+      const ead=+r[3]||0, pd=+r[4]||0, lgd=+r[5]||0;
+      S.credit.push({
+        id:r[0],name:r[1],sector:r[2],
+        ead, pd, lgd,
+        el:ead*pd*lgd,
+        ul:ead*lgd*Math.sqrt(pd*(1-pd)),
+        rating:r[8], watch:String(r[9]||'').toLowerCase()==='yes',
+        provision:ead*pd*lgd*1.1
+      });
+    });
+  }
+
+  // ── UNIT_PROFITABILITY ──
+  if(wb.SheetNames.includes('UNIT_PROFITABILITY')){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['UNIT_PROFITABILITY'], {header:1});
+    S.units = [];
+    rows.forEach((r,i) => {
+      if(i < 4) return;
+      if(!r[0] || String(r[0]).startsWith('TOTAL')) return;
+      const loans=+r[1]||0,deps=+r[2]||0,ly=+r[3]||0,dc=+r[4]||0;
+      const ftpc=+r[5]||0,ftpcr=+r[6]||0,cap=+r[10]||1;
+      const ls=ly-ftpc, ds=ftpcr-dc;
+      const nim = (loans+deps)>0 ? (ls*loans+ds*deps)/(loans+deps) : 0;
+      const raroc = cap>0 ? (ls*loans/100)/cap*100 : 0;
+      S.units.push({name:r[0],loans,deps,ly,dc,ftpc,ftpcr,ls,ds,nim,cap,raroc});
+    });
+  }
+
+  S.loaded = true;
+  const syncTime = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('data-src').textContent = fname.length>22?fname.substring(0,22)+'…':fname;
+  document.getElementById('sync-time').textContent = 'Synced '+syncTime;
+  document.getElementById('bank-chip').textContent = S.meta.bankName || 'Bank Loaded';
+  document.getElementById('qchip').textContent = S.meta.quarter || 'Data Loaded';
+  document.getElementById('upload-status').style.display='flex';
+  document.getElementById('upload-msg').textContent = (S.meta.bankName||'File') + ' loaded ✓';
+
+  renderAll();
+  showAlert('ok','Data loaded from '+fname+'. All modules updated.', 'dash-alerts');
+}
+
+function renderAll(){
+  renderDashboard();
+  renderGapTable();
+  renderLiqKPIs();
+  renderLiqStress();
+  renderStressTable();
+  renderFTPTxns();
+  renderPoolRates();
+  renderProfitTable();
+  renderCreditTable();
+  autoFillGap();
+  autoFillIRR();
+  autoFillLCR();
+  autoFillNSFR();
+  autoFillStress();
+  buildAllCharts();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD RENDER
+// ═══════════════════════════════════════════════════════════
+function renderDashboard(){
+  // KPI row
+  const lcr = S.lcr.ratio||138;
+  const nsfr = S.nsfr.ratio||112;
+  const totalAssets = +S.meta.totalAssets||47980;
+  const equity = +S.meta.equity||5800;
+  const rsa = S.irr.rsa||28400, rsl = S.irr.rsl||26800;
+  const ay = S.irr.ay||8.2, lc = S.irr.lc||5.8;
+  const nim = ay - lc;
+  const gap = rsa - rsl;
+  const irSens = gap * 0.01;
+
+  const kpis = [
+    {cls:'bl',label:'NIM',val:nim.toFixed(2)+'%',sub:'Net Interest Margin',chg:'up',chgTxt:'Asset yield − Liability cost'},
+    {cls:'te',label:'LCR',val:lcr.toFixed(1)+'%',sub:'Min: 100%',chg:lcr>=110?'up':'wa',chgTxt:lcr>=100?'Compliant':'Breach!'},
+    {cls:'am',label:'NSFR',val:nsfr.toFixed(1)+'%',sub:'Min: 100%',chg:nsfr>=105?'up':nsfr>=100?'wa':'dn',chgTxt:nsfr>=100?'Compliant':'Shortfall'},
+    {cls:'gr',label:'FTP Spread',val:(ay-lc-1.2).toFixed(2)+'%',sub:'Avg net transfer spread',chg:'up',chgTxt:'Pool-adjusted'},
+    {cls:'re',label:'IR Sensitivity',val:(irSens>=0?'+':'')+'₹'+irSens.toFixed(0)+'Cr',sub:'@100bps shock',chg:irSens>=0?'up':'dn',chgTxt:gap>=0?'Asset sensitive':'Liability sensitive'},
+  ];
+  document.getElementById('kpi-row').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.cls}">
+      <div class="kpi-lbl">${k.label}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-sub"><span class="badge ${k.chg}">${k.chgTxt}</span></div>
+    </div>`).join('');
+
+  // Reg gauges
+  const gauges=[
+    {label:'LCR',val:lcr,max:160,cls:lcr>=110?'gr':lcr>=100?'am':'re',note:lcr>=100?'OK':'Breach'},
+    {label:'NSFR',val:nsfr,max:140,cls:nsfr>=100?'am':'re',note:nsfr>=100?'OK':'Breach'},
+    {label:'CRR',val:+S.meta.crr||4.5,max:10,cls:'bl',note:'RBI: 4.5%'},
+    {label:'SLR',val:+S.meta.slr||18,max:30,cls:'te',note:'RBI: 18%'},
+  ];
+  document.getElementById('reg-gauges').innerHTML = gauges.map(g=>`
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;">
+        <span style="color:var(--ts)">${g.label} (${g.val.toFixed(1)}%)</span>
+        <span class="badge ${g.cls}">${g.note}</span>
+      </div>
+      <div class="gauge"><div class="gf ${g.cls}" style="width:${Math.min(g.val/g.max*100,100)}%"></div></div>
+    </div>`).join('');
+
+  // Summary table
+  if(S.buckets.length){
+    document.getElementById('summary-tbody').innerHTML = S.buckets.map(b=>{
+      const st = b.gap<0 ? '<span class="tag re">Deficit</span>' : '<span class="tag te">Surplus</span>';
+      return `<tr>
+        <td class="hl">${b.label}</td>
+        <td class="nm">${fmt(b.assets)}</td><td class="nm">${fmt(b.liab)}</td>
+        <td class="nm ${b.gap>=0?'pos':'neg'}">${b.gap>=0?'+':''}${fmt(b.gap)}</td>
+        <td class="nm ${b.cumGap>=0?'pos':'neg'}">${b.cumGap>=0?'+':''}${fmt(b.cumGap)}</td>
+        <td class="nm">${b.ftp.toFixed(2)}%</td>
+        <td class="nm ${b.nii>=0?'pos':'neg'}">${b.nii>=0?'+':''}${b.nii.toFixed(1)}</td>
+        <td>${st}</td></tr>`;
+    }).join('');
+  }
+
+  // Watchlist badge
+  const watch = S.credit.filter(c=>c.watch).length;
+  document.getElementById('nb-cr').textContent = watch||'0';
+  document.getElementById('nb-liq').textContent = (S.lcr.ratio<110||S.nsfr.ratio<105)?'!':'✓';
+}
+
+// ── GAP TABLE ──
+function renderGapTable(){
+  if(!S.buckets.length) return;
+  document.getElementById('gap-tbody').innerHTML = S.buckets.map(b=>{
+    const rl = Math.abs(b.gapPct)>25?'<span class="tag re">High</span>':Math.abs(b.gapPct)>10?'<span class="tag am">Medium</span>':'<span class="tag te">Low</span>';
+    return `<tr><td class="hl">${b.label}</td><td class="nm">${fmt(b.assets)}</td><td class="nm">${fmt(b.liab)}</td>
+      <td class="nm ${b.gap>=0?'pos':'neg'}">${b.gap>=0?'+':''}${fmt(b.gap)}</td>
+      <td class="nm ${b.cumGap>=0?'pos':'neg'}">${b.cumGap>=0?'+':''}${fmt(b.cumGap)}</td>
+      <td class="nm ${b.gapPct>=0?'pos':'neg'}">${b.gapPct.toFixed(1)}%</td>
+      <td class="nm ${b.nii>=0?'pos':'neg'}">${b.nii>=0?'+':''}${b.nii.toFixed(1)}</td>
+      <td>${rl}</td></tr>`;
+  }).join('');
+}
+
+// ── LIQ KPIS ──
+function renderLiqKPIs(){
+  const lcr=S.lcr.ratio||138, nsfr=S.nsfr.ratio||112;
+  const hqla=S.lcr.hqla||6420;
+  const kpis=[
+    {cls:'te',l:'LCR',v:lcr.toFixed(1)+'%',s:'Min 100%',b:lcr>=110?'up':'wa',bt:lcr>=100?'Compliant':'Breach'},
+    {cls:'am',l:'NSFR',v:nsfr.toFixed(1)+'%',s:'Min 100%',b:nsfr>=100?'wa':'dn',bt:nsfr>=100?'OK':'Shortfall'},
+    {cls:'bl',l:'HQLA Buffer',v:'₹'+Math.round(hqla)+'Cr',s:'After haircuts',b:'up',bt:'Available'},
+    {cls:'gr',l:'Survival Horizon',v:'30-day',s:'Stress window',b:'up',bt:'Basel III'},
+  ];
+  document.getElementById('liq-kpis').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.cls}">
+      <div class="kpi-lbl">${k.l}</div><div class="kpi-val">${k.v}</div>
+      <div class="kpi-sub"><span class="badge ${k.b}">${k.bt}</span></div>
+    </div>`).join('');
+}
+
+// ── LIQ STRESS TABLE ──
+function renderLiqStress(){
+  const hqla = S.lcr.hqla||6420, nco = S.lcr.nco||4640;
+  const scenarios=[
+    {n:'Base Case',dr:0.05,wf:0.10,hh:0},
+    {n:'Mild Stress',dr:0.15,wf:0.25,hh:0.05},
+    {n:'Moderate Stress',dr:0.25,wf:0.50,hh:0.10},
+    {n:'Severe Stress',dr:0.40,wf:0.75,hh:0.20},
+    {n:'Systemic Crisis',dr:0.60,wf:1.00,hh:0.30},
+  ];
+  document.getElementById('stress-liq-tbody').innerHTML = scenarios.map(sc=>{
+    const adjHQLA = hqla*(1-sc.hh);
+    const adjNCO = nco*(1+sc.dr+sc.wf);
+    const survival = Math.round(adjHQLA/adjNCO*30);
+    const gap = adjHQLA - adjNCO;
+    const ok = survival>=30;
+    const warn = survival>=20&&!ok;
+    return `<tr>
+      <td class="hl">${sc.n}</td>
+      <td class="nm">${(sc.dr*100).toFixed(0)}%</td><td class="nm">${(sc.wf*100).toFixed(0)}%</td>
+      <td class="nm">${(sc.hh*100).toFixed(0)}%</td>
+      <td class="nm ${ok?'pos':warn?'wa':'neg'}">${survival}</td>
+      <td class="nm ${gap>=0?'pos':warn?'wa':'neg'}">${gap>=0?'+':''}${fmt(gap)}</td>
+      <td>${ok?'<span class="tag te">Adequate</span>':warn?'<span class="tag am">Monitor</span>':'<span class="tag re">Critical</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── STRESS TABLE ──
+function renderStressTable(){
+  const baseNII = (S.irr.rsa||28400)-(S.irr.rsl||26800);
+  const sc=[
+    {n:'Base Case',nii:0,eve:0,ci:0,lcr:0,nsfr:0},
+    {n:'Rate +100bps',nii:-baseNII*0.01,eve:-baseNII*0.07,ci:-1.2,lcr:-10,nsfr:-4},
+    {n:'Rate +200bps',nii:-baseNII*0.02,eve:-baseNII*0.14,ci:-2.4,lcr:-26,nsfr:-9},
+    {n:'Rate −100bps',nii:baseNII*0.009,eve:baseNII*0.06,ci:0.9,lcr:6,nsfr:4},
+    {n:'Credit Crunch',nii:-185,eve:-820,ci:-3.1,lcr:-34,nsfr:-14},
+    {n:'Combined Shock',nii:-310,eve:-1240,ci:-5.8,lcr:-50,nsfr:-21},
+  ];
+  const baseLCR=S.lcr.ratio||138, baseNSFR=S.nsfr.ratio||112;
+  document.getElementById('stress-tbody').innerHTML = sc.map(s=>{
+    const lPost=baseLCR+s.lcr, nPost=baseNSFR+s.nsfr;
+    const ok=lPost>=100&&nPost>=100;
+    return `<tr>
+      <td class="hl">${s.n}</td>
+      <td class="nm ${s.nii>=0?'pos':'neg'}">${s.nii>=0?'+':''}${s.nii.toFixed(0)}</td>
+      <td class="nm ${s.eve>=0?'pos':'neg'}">${s.eve>=0?'+':''}${s.eve.toFixed(0)}</td>
+      <td class="nm ${s.ci>=0?'pos':'neg'}">${s.ci>=0?'+':''}${s.ci.toFixed(1)}%</td>
+      <td class="nm ${lPost>=100?'pos':lPost>=90?'wa':'neg'}">${lPost.toFixed(1)}%${lPost<100?' ⚠':''}</td>
+      <td class="nm ${nPost>=100?'pos':nPost>=90?'wa':'neg'}">${nPost.toFixed(1)}%${nPost<100?' ⚠':''}</td>
+      <td>${ok?'<span class="tag te">Solvent</span>':'<span class="tag re">Breach</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── FTP TXN ──
+function renderFTPTxns(){
+  if(!S.ftpTxns.length) return;
+  document.getElementById('ftp-txn-tbody').innerHTML = S.ftpTxns.map(t=>`
+    <tr><td class="hl">${t.id}</td><td>${t.product}</td><td>${t.unit}</td>
+    <td class="nm">${t.amt}</td><td class="nm">${t.mat}mo</td>
+    <td class="nm">${t.cr.toFixed(2)}%</td><td class="nm">${t.pr.toFixed(2)}%</td>
+    <td class="nm">${t.lp}bps</td>
+    <td class="nm ${t.spread>=0?'pos':'neg'}">${t.spread>=0?'+':''}${t.spread.toFixed(2)}%</td>
+    </tr>`).join('');
+}
+
+// ── POOL RATES ──
+function renderPoolRates(){
+  const rates = S.ftpRates.length ? S.ftpRates : [
+    {tenor:'Overnight',code:'ON',base:6.25,lp:0,total:6.25},
+    {tenor:'1 Month',code:'M1',base:6.50,lp:10,total:6.60},
+    {tenor:'3 Months',code:'M3',base:6.80,lp:15,total:6.95},
+    {tenor:'6 Months',code:'M6',base:7.10,lp:20,total:7.30},
+    {tenor:'1 Year',code:'Y1',base:7.40,lp:25,total:7.65},
+    {tenor:'3 Years',code:'Y3',base:7.85,lp:35,total:8.20},
+    {tenor:'5 Years',code:'Y5',base:8.10,lp:45,total:8.55},
+    {tenor:'>5 Years',code:'Y5P',base:8.40,lp:55,total:8.95},
+  ];
+  S._poolRates = rates;
+  document.getElementById('pool-tbody').innerHTML = rates.map((r,i)=>`
+    <tr>
+      <td class="hl">${r.tenor}</td>
+      <td><input class="fi" style="width:70px;padding:4px 7px;font-size:11px;" id="pr-base-${i}" value="${r.base.toFixed(2)}" onchange="updatePool(${i})"/></td>
+      <td style="text-align:right;color:var(--ts);">${r.lp}</td>
+      <td class="nm" id="pr-total-${i}" style="color:var(--teal);font-weight:500;">${r.total.toFixed(2)}%</td>
+      <td><button class="btn btn-t" style="padding:3px 8px;font-size:10px;" onclick="updatePool(${i})">Update</button></td>
+    </tr>`).join('');
+}
+
+function updatePool(i){
+  const base = parseFloat(document.getElementById('pr-base-'+i).value)||0;
+  const lp = S._poolRates[i].lp||0;
+  const total = base + lp/100;
+  S._poolRates[i].base = base;
+  S._poolRates[i].total = total;
+  document.getElementById('pr-total-'+i).textContent = total.toFixed(2)+'%';
+  if(CHARTS.poolChart) rebuildPoolChart();
+  if(CHARTS.ftpCurve) rebuildFTPCurve();
+}
+
+// ── PROFIT TABLE ──
+function renderProfitTable(){
+  if(!S.units.length) return;
+  document.getElementById('profit-tbody').innerHTML = S.units.map(u=>`
+    <tr><td class="hl">${u.name}</td>
+    <td class="nm">${fmt(u.loans)}</td><td class="nm">${fmt(u.deps)}</td>
+    <td class="nm">${u.ly.toFixed(2)}%</td><td class="nm">${u.dc.toFixed(2)}%</td>
+    <td class="nm wa">${u.ftpc.toFixed(2)}%</td><td class="nm pos">${u.ftpcr.toFixed(2)}%</td>
+    <td class="nm pos">${u.ls.toFixed(2)}%</td><td class="nm pos">${u.ds.toFixed(2)}%</td>
+    <td class="nm" style="color:var(--teal);font-weight:500;">${u.nim.toFixed(2)}%</td>
+    <td class="nm ${u.raroc>15?'pos':u.raroc>8?'wa':'neg'}">${u.raroc.toFixed(1)}%</td>
+    </tr>`).join('');
+
+  const kpis = S.units.slice(0,5).map((u,i)=>{
+    const cls=['bl','te','am','gr','re'][i%5];
+    return `<div class="kpi ${cls}"><div class="kpi-lbl">${u.name}</div>
+      <div class="kpi-val">${u.nim.toFixed(2)}<span style="font-size:13px">%</span></div>
+      <div class="kpi-sub">RAROC <span class="badge ${u.raroc>15?'up':'wa'}">${u.raroc.toFixed(1)}%</span></div></div>`;
+  }).join('');
+  document.getElementById('profit-kpis').innerHTML = kpis;
+}
+
+// ── CREDIT TABLE ──
+function renderCreditTable(){
+  if(!S.credit.length) return;
+  document.getElementById('cr-tbody').innerHTML = S.credit.map(c=>`
+    <tr><td>${c.id}</td><td class="hl">${c.name}</td><td>${c.sector}</td>
+    <td class="nm">${fmt(c.ead)}</td>
+    <td class="nm ${c.pd>0.05?'neg':c.pd>0.02?'wa':'pos'}">${(c.pd*100).toFixed(2)}%</td>
+    <td class="nm">${(c.lgd*100).toFixed(0)}%</td>
+    <td class="nm neg">${c.el.toFixed(2)}</td>
+    <td class="nm wa">${c.ul.toFixed(2)}</td>
+    <td>${c.rating}</td>
+    <td style="color:${c.watch?'var(--red)':'var(--green)'};font-weight:${c.watch?500:400};">${c.watch?'YES':'No'}</td>
+    <td class="nm">${c.provision.toFixed(2)}</td>
+    </tr>`).join('');
+
+  const watchCount = S.credit.filter(c=>c.watch).length;
+  const totalEAD = S.credit.reduce((a,c)=>a+c.ead,0);
+  const totalEL = S.credit.reduce((a,c)=>a+c.el,0);
+  const gNPA = totalEAD>0?S.credit.filter(c=>c.watch).reduce((a,c)=>a+c.ead,0)/totalEAD*100:3.84;
+  const avgPD = totalEAD>0?S.credit.reduce((a,c)=>a+c.ead*c.pd,0)/totalEAD*100:2.1;
+
+  const kpis=[
+    {cls:'re',l:'Gross NPA',v:gNPA.toFixed(2)+'%',b:'dn',bt:'Portfolio NPA'},
+    {cls:'am',l:'Avg Portfolio PD',v:avgPD.toFixed(2)+'%',b:'wa',bt:'Weighted avg'},
+    {cls:'bl',l:'Total EL',v:'₹'+totalEL.toFixed(1)+'Cr',b:'dn',bt:'Expected Loss'},
+    {cls:'re',l:'Watchlist',v:watchCount+' Accounts',b:watchCount>0?'dn':'up',bt:watchCount>0?'Requires Review':'Clean'},
+  ];
+  document.getElementById('cr-kpis').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.cls}">
+      <div class="kpi-lbl">${k.l}</div><div class="kpi-val" style="font-size:17px;">${k.v}</div>
+      <div class="kpi-sub"><span class="badge ${k.b}">${k.bt}</span></div>
+    </div>`).join('');
+
+  if(watchCount>0){
+    document.getElementById('cr-alerts').innerHTML =
+      `<div class="al da">⚠ ${watchCount} account(s) on watchlist with elevated PD. Immediate review required.</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CALCULATORS
+// ═══════════════════════════════════════════════════════════
+function autoFillGap(){
+  if(!S.irr.rsa) return;
+  document.getElementById('g-rsa').value = S.irr.rsa||'';
+  document.getElementById('g-rsl').value = S.irr.rsl||'';
+  document.getElementById('g-ta').value = S.meta.totalAssets||S.irr.ta||'';
+  document.getElementById('g-da').value = S.irr.da||'';
+  document.getElementById('g-dl').value = S.irr.dl||'';
+}
+function autoFillIRR(){
+  if(!S.irr.rsa) return;
+  document.getElementById('irr-rsa').value = S.irr.rsa||'';
+  document.getElementById('irr-rsl').value = S.irr.rsl||'';
+  document.getElementById('irr-ay').value = S.irr.ay||8.2;
+  document.getElementById('irr-lc').value = S.irr.lc||5.8;
+  document.getElementById('eve-da').value = S.irr.da||4.2;
+  document.getElementById('eve-dl').value = S.irr.dl||2.8;
+  document.getElementById('eve-ta').value = S.meta.totalAssets||S.irr.ta||47980;
+}
+function autoFillLCR(){
+  if(S.lcr.hqla){
+    document.getElementById('l1').value = Math.round(S.lcr.l1)||5200;
+    document.getElementById('l2a').value = Math.round(S.lcr.l2a/0.85)||1400;
+    document.getElementById('l2b').value = Math.round(S.lcr.l2b/0.75)||380;
+    document.getElementById('nco').value = Math.round(S.lcr.nco)||4640;
+  }
+}
+function autoFillNSFR(){
+  if(S.nsfr.asf){
+    document.getElementById('asf').value = Math.round(S.nsfr.asf)||38200;
+    document.getElementById('rsf').value = Math.round(S.nsfr.rsf)||34100;
+  }
+}
+function autoFillStress(){
+  document.getElementById('stress-sz').value = S.meta.totalAssets||47980;
+  document.getElementById('stress-cap').value = S.meta.equity||5800;
+}
+
+function calcGap(){
+  const rsa=+document.getElementById('g-rsa').value, rsl=+document.getElementById('g-rsl').value;
+  const ta=+document.getElementById('g-ta').value||47980, bps=+document.getElementById('g-bps').value/100;
+  const da=+document.getElementById('g-da').value, dl=+document.getElementById('g-dl').value;
+  if(!rsa||!rsl){return;}
+  const gap=rsa-rsl, gapPct=gap/ta*100, nii=gap*bps;
+  const dgap=da-(rsl/ta)*dl;
+  const r=document.getElementById('gap-res');
+  r.style.display='block';
+  r.innerHTML=rb([
+    ['Re-pricing Gap',`₹${fmt(gap)} Cr`,'hi'],
+    ['Gap Ratio',`${gapPct.toFixed(2)}%`,gapPct>=0?'':'da'],
+    [`NII Impact @${(bps*100).toFixed(0)}bps`,`${nii>=0?'+':''}₹${nii.toFixed(1)} Cr`,nii>=0?'':'da'],
+    ['Duration Gap',`${dgap.toFixed(3)} yrs`,Math.abs(dgap)>2?'wa':''],
+    ['Sensitivity Type',gap>=0?'Asset Sensitive':'Liability Sensitive',''],
+  ]);
+  rebuildGapChart();
+}
+
+function calcLCR(){
+  const l1=+document.getElementById('l1').value, l2a=+document.getElementById('l2a').value*0.85;
+  const l2b=+document.getElementById('l2b').value*0.75, nco=+document.getElementById('nco').value;
+  const hqla=l1+l2a+l2b, lcr=nco?hqla/nco*100:0;
+  document.getElementById('lcr-res').style.display='block';
+  document.getElementById('lcr-res').innerHTML=rb([
+    ['HQLA (after haircuts)',`₹${hqla.toFixed(0)} Cr`,'hi'],
+    ['Net Cash Outflows',`₹${nco.toFixed(0)} Cr`,''],
+    ['LCR',`${lcr.toFixed(1)}%`,lcr>=100?'hi':'da'],
+    ['Regulatory Min','100%',''],
+    ['Status',lcr>=110?'✓ Comfortable':lcr>=100?'⚠ Meets minimum':'✗ Non-Compliant',lcr>=100?'':'da'],
+  ]);
+  renderDashboard();
+}
+
+function calcNSFR(){
+  const asf=+document.getElementById('asf').value, rsf=+document.getElementById('rsf').value;
+  const nsfr=rsf?asf/rsf*100:0;
+  document.getElementById('nsfr-res').style.display='block';
+  document.getElementById('nsfr-res').innerHTML=rb([
+    ['Available Stable Funding',`₹${fmt(asf)} Cr`,'hi'],
+    ['Required Stable Funding',`₹${fmt(rsf)} Cr`,''],
+    ['NSFR',`${nsfr.toFixed(1)}%`,nsfr>=100?'hi':'da'],
+    ['Surplus/Shortfall',`${asf>=rsf?'+':''}₹${(asf-rsf).toFixed(0)} Cr`,asf>=rsf?'':'da'],
+    ['Status',nsfr>=100?'✓ Compliant':'✗ Shortfall',nsfr>=100?'':'da'],
+  ]);
+}
+
+function calcNII(){
+  const rsa=+document.getElementById('irr-rsa').value, rsl=+document.getElementById('irr-rsl').value;
+  const ay=+document.getElementById('irr-ay').value, lc=+document.getElementById('irr-lc').value;
+  const bps=+document.getElementById('irr-bps').value/10000, h=+document.getElementById('irr-h').value/12;
+  const gap=rsa-rsl, nim=ay-lc, nii=gap*bps*h;
+  document.getElementById('nii-res').style.display='block';
+  document.getElementById('nii-res').innerHTML=rb([
+    ['Re-pricing Gap',`₹${fmt(gap)} Cr`,''],
+    ['Current NIM',`${nim.toFixed(2)}%`,'hi'],
+    [`NII Impact`,`${nii>=0?'+':''}₹${nii.toFixed(1)} Cr`,nii>=0?'':'da'],
+    ['Annualised Impact',`${nii/h>=0?'+':''}₹${(nii/h).toFixed(1)} Cr`,nii>=0?'':'da'],
+    ['Sensitivity',gap>=0?'Asset Sensitive — rate hikes help':'Liability Sensitive — rate cuts help','wa'],
+  ]);
+  rebuildRateChart();
+}
+
+function calcEVE(){
+  const da=+document.getElementById('eve-da').value, dl=+document.getElementById('eve-dl').value;
+  const ta=+document.getElementById('eve-ta').value||47980, lev=+document.getElementById('eve-lev').value||8.5;
+  const bps=+document.getElementById('eve-bps').value/10000, dr=+document.getElementById('eve-dr').value/100;
+  const tl=ta*(1-1/lev), dgap=da-(tl/ta)*dl;
+  const eveImpact=-dgap*ta*(bps/(1+dr)), eq=ta/lev;
+  document.getElementById('eve-res').style.display='block';
+  document.getElementById('eve-res').innerHTML=rb([
+    ['Duration Gap',`${dgap.toFixed(3)} yrs`,Math.abs(dgap)>3?'wa':''],
+    ['EVE Impact',`${eveImpact>=0?'+':''}₹${eveImpact.toFixed(1)} Cr`,eveImpact<0?'da':''],
+    ['Equity (Book)',`₹${eq.toFixed(0)} Cr`,''],
+    ['EVE / Equity',`${(eveImpact/eq*100).toFixed(2)}%`,Math.abs(eveImpact/eq*100)>15?'da':'wa'],
+    ['Verdict',dgap>0?'Positive gap — EVE falls when rates rise':'Negative gap — EVE rises when rates rise',''],
+  ]);
+}
+
+function calcFTP(){
+  const type=document.getElementById('ftp-type').value;
+  const amt=+document.getElementById('ftp-amt').value, cr=+document.getElementById('ftp-cr').value;
+  const pool=+document.getElementById('ftp-pr').value, lp=+document.getElementById('ftp-lp').value/100;
+  const cs=+document.getElementById('ftp-cs').value/100, oc=+document.getElementById('ftp-oc').value/100;
+  const allIn=pool+lp+cs+oc;
+  const spread=type==='deposit'?allIn-cr:cr-allIn;
+  const annRev=amt*Math.abs(spread)/100;
+  document.getElementById('ftp-res').style.display='block';
+  document.getElementById('ftp-res').innerHTML=rb([
+    ['All-In FTP Rate',`${allIn.toFixed(2)}%`,'hi'],
+    ['Contract Rate',`${cr.toFixed(2)}%`,''],
+    ['Net Spread',`${spread>=0?'+':''}${spread.toFixed(2)}%`,spread>=0?'':'da'],
+    ['Annual Revenue/Cost',`${spread>=0?'+':''}₹${annRev.toFixed(2)} Cr`,spread>=0?'':'da'],
+    ['Verdict',spread>=0?'✓ Value Creating':'✗ Value Destroying',spread>=0?'':'da'],
+  ]);
+  // Waterfall
+  const wf=document.getElementById('ftp-wf');
+  const cols={pool:C.blue,lp:C.teal,cs:C.amber,oc:C.red,allIn:C.purple,cr:C.green};
+  const mx=Math.max(cr,allIn)+0.5;
+  wf.innerHTML=[['Pool Rate',pool,cols.pool],['+ Liq. Premium',lp,cols.lp],['+ Credit Spread',cs,cols.cs],
+    ['+ Option Cost',oc,cols.oc],[' ',0,''],['All-In FTP',allIn,cols.allIn],
+    ['Contract Rate',cr,cols.cr]].map(([l,v,col])=>!col?`<div class="dv"></div>`:
+    `<div class="wf-row"><div class="wf-lbl">${l}</div>
+    <div class="wf-bw"><div class="wf-bar" style="width:${Math.min(v/mx*100,100)}%;background:${col};opacity:.75;"></div></div>
+    <div class="wf-v" style="color:${col}">${v.toFixed(2)}%</div></div>`).join('');
+  rebuildFTPCurve();
+}
+
+function calcEL(){
+  const ead=+document.getElementById('cr-ead').value, pd=+document.getElementById('cr-pd').value/100;
+  const lgd=+document.getElementById('cr-lgd').value/100;
+  const el=ead*pd*lgd, ul=ead*lgd*Math.sqrt(pd*(1-pd));
+  document.getElementById('el-res').style.display='block';
+  document.getElementById('el-res').innerHTML=rb([
+    ['Expected Loss (EL)',`₹${el.toFixed(2)} Cr`,'hi'],
+    ['Unexpected Loss (UL)',`₹${ul.toFixed(2)} Cr`,'wa'],
+    ['EL as % of EAD',`${(el/ead*100).toFixed(3)}%`,''],
+    ['Min. Provision Required',`₹${(el*1.1).toFixed(2)} Cr`,'wa'],
+    ['Capital Charge (UL)',`₹${(ul*0.08).toFixed(2)} Cr`,''],
+  ]);
+}
+
+function runStress(){
+  const type=document.getElementById('stress-type').value;
+  const sz=+document.getElementById('stress-sz').value||47980;
+  const baseLCR=S.lcr.ratio||138, baseNSFR=S.nsfr.ratio||112;
+  const sc={
+    'Rate Shock (+200bps)':{nii:-(S.irr.rsa||28400-(S.irr.rsl||26800))*0.02,eve:-560,ci:-2.4,dl:-26,dn:-9},
+    'Rate Shock (−200bps)':{nii:+(S.irr.rsa||28400-(S.irr.rsl||26800))*0.018,eve:490,ci:0.9,dl:6,dn:4},
+    'Credit Crunch':{nii:-185,eve:-820,ci:-3.1,dl:-34,dn:-14},
+    'Liquidity Crisis':{nii:-60,eve:-190,ci:-2.4,dl:-50,dn:-21},
+    'Combined Shock':{nii:-310,eve:-1240,ci:-5.8,dl:-50,dn:-21},
+  };
+  const s=sc[type]||sc['Combined Shock'];
+  const lPost=baseLCR+s.dl, nPost=baseNSFR+s.dn;
+  document.getElementById('stress-res').style.display='block';
+  document.getElementById('stress-res').innerHTML=rb([
+    ['Scenario',type,'hi'],
+    ['NII Impact',`${s.nii>=0?'+':''}₹${s.nii.toFixed(0)} Cr`,s.nii<0?'da':''],
+    ['EVE Impact',`${s.eve>=0?'+':''}₹${s.eve.toFixed(0)} Cr`,s.eve<0?'da':''],
+    ['Post-Stress LCR',`${lPost.toFixed(1)}%`,lPost<100?'da':lPost<110?'wa':''],
+    ['Post-Stress NSFR',`${nPost.toFixed(1)}%`,nPost<100?'da':'wa'],
+    ['Verdict',lPost>=100&&nPost>=100?'✓ Solvent under this scenario':'✗ Regulatory breaches — action required',lPost>=100&&nPost>=100?'':'da'],
+  ]);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHART BUILDERS (all driven by state)
+// ═══════════════════════════════════════════════════════════
+const defO = {responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{x:{grid:{color:C.grid},ticks:{color:C.t,font:{size:10}}},
+          y:{grid:{color:C.grid},ticks:{color:C.t,font:{size:10}}}}};
+
+function buildAllCharts(){
+  rebuildNIIChart(); rebuildDonut(); rebuildMatChart();
+  rebuildGapChart(); rebuildRateChart();
+  rebuildFTPCurve(); rebuildPoolChart();
+  rebuildRarocChart(); rebuildCrQChart();
+}
+
+function mkChart(id,cfg){
+  if(CHARTS[id]) CHARTS[id].destroy();
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  CHARTS[id]=new Chart(canvas,cfg);
+  return CHARTS[id];
+}
+
+function rebuildNIIChart(){
+  const gap = S.irr.rsa&&S.irr.rsl ? S.irr.rsa-S.irr.rsl : 1600;
+  const shocks=[-200,-100,-50,0,50,100,200];
+  const data=shocks.map(b=>gap*b/10000);
+  mkChart('niiChart',{type:'bar',data:{
+    labels:shocks.map(b=>b+'bps'),
+    datasets:[{data,backgroundColor:data.map(v=>v>=0?'rgba(0,230,118,0.55)':'rgba(255,61,87,0.5)'),
+      borderColor:data.map(v=>v>=0?C.green:C.red),borderWidth:1,borderRadius:4}]},
+    options:{...defO}});
+}
+
+function rebuildDonut(){
+  const units=S.units.length?S.units:[
+    {name:'Retail',loans:12400,deps:18600},{name:'Corporate',loans:22800,deps:8200},
+    {name:'SME',loans:7400,deps:4800},{name:'Treasury',loans:5380,deps:0},{name:'NRI',loans:2100,deps:6400}
+  ];
+  const total=units.reduce((a,u)=>a+(u.loans+u.deps),1);
+  mkChart('ftpDonut',{type:'doughnut',data:{
+    labels:units.map(u=>u.name),
+    datasets:[{data:units.map(u=>Math.round((u.loans+u.deps)/total*100)),
+      backgroundColor:['rgba(41,121,255,.7)','rgba(0,229,204,.7)','rgba(255,171,0,.7)','rgba(124,77,255,.7)','rgba(0,230,118,.7)'],
+      borderColor:'#03050a',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'right',labels:{color:C.t,font:{size:10},boxWidth:10}}}}});
+}
+
+function rebuildMatChart(){
+  const b=S.buckets.length?S.buckets:[
+    {label:'1-7D',assets:1240,liab:1850},{label:'1-3M',assets:3200,liab:3800},
+    {label:'3-6M',assets:4100,liab:3550},{label:'6-12M',assets:5800,liab:6900},
+    {label:'1-3Y',assets:12400,liab:10200},{label:'>3Y',assets:18600,liab:14800}
+  ];
+  mkChart('matChart',{type:'bar',data:{
+    labels:b.map(x=>x.label),
+    datasets:[
+      {label:'Assets',data:b.map(x=>x.assets),backgroundColor:'rgba(41,121,255,.6)',borderRadius:3},
+      {label:'Liabilities',data:b.map(x=>x.liab),backgroundColor:'rgba(255,61,87,.45)',borderRadius:3}
+    ]},
+    options:{...defO,plugins:{legend:{display:true,labels:{color:C.t,font:{size:10},boxWidth:10}}}}});
+}
+
+function rebuildGapChart(){
+  const b=S.buckets.length?S.buckets:[
+    {label:'ON',gap:-360},{label:'W1',gap:-610},{label:'M1',gap:450},
+    {label:'M3',gap:-600},{label:'M6',gap:550},{label:'M12',gap:-1100},
+    {label:'Y3',gap:2200},{label:'Y5P',gap:3800}
+  ];
+  mkChart('gapChart',{type:'bar',data:{
+    labels:b.map(x=>x.label||x.code),
+    datasets:[{data:b.map(x=>x.gap),
+      backgroundColor:b.map(x=>x.gap>=0?'rgba(0,230,118,.55)':'rgba(255,61,87,.5)'),
+      borderColor:b.map(x=>x.gap>=0?C.green:C.red),borderWidth:1,borderRadius:4}]},
+    options:{...defO}});
+}
+
+function rebuildRateChart(){
+  const gap=S.irr.rsa&&S.irr.rsl?S.irr.rsa-S.irr.rsl:1600;
+  const ta=+S.meta.totalAssets||47980;
+  const da=S.irr.da||4.2,dl=S.irr.dl||2.8,dr=0.075;
+  const bps=[-200,-150,-100,-50,0,50,100,150,200];
+  const niiData=bps.map(b=>gap*b/10000);
+  const eveData=bps.map(b=>-(da-(ta*0.88/ta)*dl)*ta*(b/10000/(1+dr)));
+  mkChart('rateChart',{type:'line',data:{
+    labels:bps.map(b=>b+''),
+    datasets:[
+      {label:'NII Impact (₹Cr)',data:niiData,borderColor:C.blue,backgroundColor:'rgba(41,121,255,.08)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:C.blue},
+      {label:'EVE Impact (₹Cr)',data:eveData,borderColor:C.teal,backgroundColor:'rgba(0,229,204,.04)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:C.teal}
+    ]},
+    options:{...defO,plugins:{legend:{display:true,labels:{color:C.t,font:{size:10},boxWidth:10}}}}});
+}
+
+function rebuildFTPCurve(){
+  const rates=S._poolRates||S.ftpRates;
+  if(!rates||!rates.length) return;
+  mkChart('ftpCurve',{type:'line',data:{
+    labels:rates.map(r=>r.tenor),
+    datasets:[{label:'FTP Rate',data:rates.map(r=>r.total||r.base),
+      borderColor:C.teal,backgroundColor:'rgba(0,229,204,.06)',fill:true,tension:.4,pointRadius:3,borderWidth:2}]},
+    options:{...defO,scales:{x:{grid:{color:C.grid},ticks:{color:C.t,font:{size:9}}},y:{grid:{color:C.grid},ticks:{color:C.t,font:{size:9}}}}}});
+}
+
+function rebuildPoolChart(){
+  const rates=S._poolRates||S.ftpRates;
+  if(!rates||!rates.length){
+    rebuildDefaultPoolChart(); return;
+  }
+  mkChart('poolChart',{type:'line',data:{
+    labels:rates.map(r=>r.tenor),
+    datasets:[
+      {label:'FTP Rate',data:rates.map(r=>r.total||r.base),borderColor:C.teal,tension:.4,pointRadius:3,fill:false,borderWidth:2},
+      {label:'MCLR',data:rates.map(r=>r.mclr||(+S.meta.mclr||8.6)),borderColor:C.blue,tension:.4,pointRadius:3,fill:false,borderWidth:1.5,borderDash:[5,4]},
+      {label:'G-Sec',data:rates.map(r=>r.gsec||(r.base-0.6)),borderColor:C.amber,tension:.4,pointRadius:3,fill:false,borderWidth:1.5,borderDash:[3,3]}
+    ]},
+    options:{...defO,plugins:{legend:{display:true,labels:{color:C.t,font:{size:10},boxWidth:10}}}}});
+}
+function rebuildDefaultPoolChart(){
+  const labels=['O/N','1M','3M','6M','1Y','3Y','5Y','>5Y'];
+  mkChart('poolChart',{type:'line',data:{labels,datasets:[
+    {label:'FTP Rate',data:[6.25,6.60,6.95,7.30,7.65,8.20,8.55,8.95],borderColor:C.teal,tension:.4,pointRadius:3,fill:false,borderWidth:2},
+    {label:'MCLR',data:[8.35,8.40,8.45,8.50,8.60,8.80,8.95,9.10],borderColor:C.blue,tension:.4,pointRadius:3,fill:false,borderWidth:1.5,borderDash:[5,4]},
+    {label:'G-Sec',data:[6.80,6.90,7.00,7.15,7.30,7.60,7.80,8.00],borderColor:C.amber,tension:.4,pointRadius:3,fill:false,borderWidth:1.5,borderDash:[3,3]}
+  ]},options:{...defO,plugins:{legend:{display:true,labels:{color:C.t,font:{size:10},boxWidth:10}}}}});
+}
+
+function rebuildRarocChart(){
+  const units=S.units.length?S.units:[
+    {name:'Retail',raroc:18.4},{name:'Corporate',raroc:14.2},
+    {name:'SME',raroc:16.8},{name:'Treasury',raroc:8.6},{name:'NRI',raroc:12.4}
+  ];
+  mkChart('rarocChart',{type:'bar',data:{
+    labels:units.map(u=>u.name),
+    datasets:[{data:units.map(u=>u.raroc),
+      backgroundColor:units.map(u=>u.raroc>15?'rgba(0,230,118,.6)':u.raroc>10?'rgba(41,121,255,.6)':'rgba(255,171,0,.6)'),
+      borderRadius:5}]},
+    options:{...defO}});
+}
+
+function rebuildCrQChart(){
+  const tot=S.credit.reduce((a,c)=>a+c.ead,0)||8000;
+  const bands={aaa:0,a:0,bbb:0,sub:0};
+  S.credit.forEach(c=>{
+    const r=String(c.rating||'').toUpperCase();
+    if(r.startsWith('AA')||r==='AAA') bands.aaa+=c.ead;
+    else if(r==='A') bands.a+=c.ead;
+    else if(r==='BBB') bands.bbb+=c.ead;
+    else bands.sub+=c.ead;
+  });
+  const data=S.credit.length?
+    [Math.round(bands.aaa/tot*100),Math.round(bands.a/tot*100),Math.round(bands.bbb/tot*100),Math.round(bands.sub/tot*100)]:
+    [42,35,19,4];
+  mkChart('crQChart',{type:'doughnut',data:{
+    labels:['AAA/AA','A','BBB','BB & Below'],
+    datasets:[{data,
+      backgroundColor:['rgba(0,230,118,.7)','rgba(41,121,255,.7)','rgba(255,171,0,.7)','rgba(255,61,87,.7)'],
+      borderColor:'#03050a',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'right',labels:{color:C.t,font:{size:10},boxWidth:10}}}}});
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function fmt(n){ return Math.abs(n)>=1000?n.toLocaleString('en-IN',{maximumFractionDigits:0}):n.toFixed(0); }
+function rb(rows){ return rows.map(([k,v,cls])=>`<div class="rr"><span class="rk">${k}</span><span class="rv ${cls||''}">${v}</span></div>`).join(''); }
+function showAlert(type,msg,containerId='dash-alerts'){
+  const c=document.getElementById(containerId);
+  if(!c) return;
+  const icons={ok:'✓',in:'ℹ',wa:'⚠',da:'✗'};
+  c.innerHTML=`<div class="al ${type}">${icons[type]||'●'} ${msg}</div>`;
+  setTimeout(()=>c.innerHTML='', 8000);
+}
+
+// Init: build charts with defaults
+window.addEventListener('DOMContentLoaded',()=>{
+  renderDefaultDashboard();
+  renderDefaultPool();
+  renderLiqStress();
+  renderStressTable();
+});
+
+function renderDefaultDashboard(){
+  document.getElementById('kpi-row').innerHTML=`
+    <div class="kpi bl"><div class="kpi-lbl">NIM</div><div class="kpi-val">—</div><div class="kpi-sub" style="color:var(--tm)">Upload data</div></div>
+    <div class="kpi te"><div class="kpi-lbl">LCR</div><div class="kpi-val">—</div><div class="kpi-sub" style="color:var(--tm)">Upload data</div></div>
+    <div class="kpi am"><div class="kpi-lbl">NSFR</div><div class="kpi-val">—</div><div class="kpi-sub" style="color:var(--tm)">Upload data</div></div>
+    <div class="kpi gr"><div class="kpi-lbl">FTP Spread</div><div class="kpi-val">—</div><div class="kpi-sub" style="color:var(--tm)">Upload data</div></div>
+    <div class="kpi re"><div class="kpi-lbl">IR Sensitivity</div><div class="kpi-val">—</div><div class="kpi-sub" style="color:var(--tm)">Upload data</div></div>`;
+  document.getElementById('reg-gauges').innerHTML='<div style="color:var(--tm);font-size:12px;text-align:center;padding:20px;">Upload Excel data to populate gauges</div>';
+  buildAllCharts();
+}
+function renderDefaultPool(){
+  S._poolRates=[
+    {tenor:'Overnight',lp:0,base:6.25,total:6.25},{tenor:'1 Month',lp:10,base:6.50,total:6.60},
+    {tenor:'3 Months',lp:15,base:6.80,total:6.95},{tenor:'6 Months',lp:20,base:7.10,total:7.30},
+    {tenor:'1 Year',lp:25,base:7.40,total:7.65},{tenor:'3 Years',lp:35,base:7.85,total:8.20},
+    {tenor:'5 Years',lp:45,base:8.10,total:8.55},{tenor:'>5 Years',lp:55,base:8.40,total:8.95},
+  ];
+  renderPoolRates();
+  rebuildDefaultPoolChart();
+}
+</script>
+</body>
+</html>

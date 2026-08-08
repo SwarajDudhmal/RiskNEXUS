@@ -1,0 +1,8 @@
+Credit Nexus - Unified Banking Intelligence Suite
+◦ Tech Stack: Python, XGBoost, React, Firebase, Streamlit, Google Gemini Pro, TypeScript
+◦ Developed a dual-perspective financial ecosystem integrating consumer credit simulators with institutional-grade risk
+analytics.
+◦ Implemented a predictive engine using XGBoost for default risk probability and multi-class credit grade
+classification.
+◦ Designed institutional risk modules for Asset Liability Management (ALM) stress testing and Funds Transfer Pricing
+(FTP) calculations

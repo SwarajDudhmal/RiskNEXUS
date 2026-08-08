@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.venv/
+**/.venv/
+venv/
+**/venv/
+env/
+**/env/
+
+# Build and Output
+.next/
+**/.next/
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+
+# Python cache & compiled files
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Environment & local secret files
+.env
+.env*.local
+*.env
+
+# System & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,62 @@
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.tier-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tier-table th {
+  padding: 12px 15px;
+  color: #64748b;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #2d2e36;
+}
+
+.tier-table td {
+  padding: 15px;
+  color: #fff;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #1c1d25;
+}
+
+.name-cell { display: flex; flex-direction: column; }
+.main-name { font-weight: 600; color: #fff; }
+.sub-id { font-size: 0.7rem; color: #64748b; }
+
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.status-pill.pending { background: rgba(234, 179, 8, 0.1); color: #eab308; }
+
+.eye-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.eye-btn:hover { transform: scale(1.2); }
+
+.bn-card-head-row{
+    display: flex;
+    justify-content: space-between;
+}
+
+
+.bn-card-head-row button{
+    display: flex;
+    justify-content: space-between;
+    margin-right: 20px;
+}

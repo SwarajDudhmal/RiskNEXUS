@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+instance/
+
+# Node
+node_modules/
+dist/
+.env
+build/
+
+# IDE files
+.vscode/
+.idea/
